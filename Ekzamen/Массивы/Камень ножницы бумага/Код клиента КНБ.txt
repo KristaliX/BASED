@@ -1,0 +1,20 @@
+Обычный тср ip клиент 
+
+#define DEFAULT_COUNT 1
+
+В обработчик кнопки конект, в самый конец: 
+if (connect(m_sClient, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
+	{
+		sprintf_s (Str, sizeof (Str), "connect() failed: %d", WSAGetLastError());
+		m_ListBox.AddString(Str);
+		return;
+	}
+
+		recv(m_sClient, Str, 2, 0);
+	if (atoi(Str) == 1)
+		SetConnected(true);
+	else{
+		sprintf_s(Str, sizeof(Str), "Достигнут лимит подключений");
+		m_ListBox.AddString(Str);
+		SetConnected(false);
+	}

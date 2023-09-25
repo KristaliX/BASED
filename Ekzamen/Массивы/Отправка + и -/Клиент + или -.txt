@@ -1,0 +1,63 @@
+В обработчик коннекта
+
+
+char szBuffer[DEFAULT_BUFFER];
+		int	ret = recv(m_sClient, szBuffer, DEFAULT_BUFFER, 0);
+		if (ret == SOCKET_ERROR)
+			{
+				sprintf_s (Str, sizeof (Str), "recv() failed: %d", WSAGetLastError());
+				m_ListBox.AddString(Str);
+			}
+		else
+		{
+			szBuffer[ret] = '\0';
+			sprintf_s (Str, sizeof (Str), szBuffer);
+			m_ListBox.AddString(Str);
+			if(strcmp(szBuffer, "No more room on server")==0)
+			{
+			  closesocket(m_sClient);
+	          WSACleanup();
+			 return;
+			}
+			SetConnected(true);
+
+
+			int	ret = recv(m_sClient, szBuffer, DEFAULT_BUFFER, 0);
+			if (ret == SOCKET_ERROR)
+			{
+				sprintf_s (Str, sizeof (Str), "recv() failed: %d", WSAGetLastError());
+				m_ListBox.AddString(Str);
+			}
+			else
+			{
+				szBuffer[ret] = '\0';
+				sprintf_s (Str, sizeof (Str), szBuffer);
+				m_ListBox.AddString(Str);
+				if(strcmp(szBuffer, "-")==0)
+				{
+					closesocket(m_sClient);
+					WSACleanup();
+					SetConnected(false);
+					return;
+				}
+				else
+					GetDlgItem(IDC_SEND)->EnableWindow(true);
+			}
+		}
+
+
+BOOL CClientDlg::OnInitDialog()
+
+
+
+	m_NoEcho.SetCheck(1);
+	SetConnected(false);
+	GetDlgItem(IDC_SEND)->EnableWindow(false);
+
+
+В конец обработчика сенд
+	closesocket(m_sClient);
+	WSACleanup();
+	SetConnected(false);
+GetDlgItem(IDC_SEND)->EnableWindow(false);
+

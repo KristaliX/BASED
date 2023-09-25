@@ -1,0 +1,142 @@
+
+int GetNumClients();
+bool CheckS();
+void SendAll(HWND _hwnd);
+SOCKET GetSecSocket(SOCKET s);
+char * WinLos();
+
+
+int GetNumClients(){
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	int n = 0;
+	while (temp){
+		n++;
+		temp = temp->Next;
+	}
+	return n;
+}
+
+bool CheckS(){
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	int n = 0;
+	while (temp){
+		if (temp->BytesRECV == 0)
+			n++;
+			temp = temp->Next;
+	}
+	if (n == 0) return true;
+	else return false;
+}
+
+SOCKET GetSecSocket(SOCKET s){
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	while (temp)
+		if (temp->Socket != s)
+			return temp->Socket;
+		else temp = temp->Next;
+	
+}
+
+void SendAll(HWND _hwnd){
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	while (temp){
+		PostMessage(_hwnd, WM_SOCKET, temp->Socket, FD_WRITE);
+			temp = temp->Next;
+
+	}
+}
+char * WinLos(){
+	char * str = (char *)malloc(100);
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	int i = 0;
+	int values[2];
+	while (temp){
+		if (strcmp(temp->DataBuf.buf, "stone") == 0)
+			values[i++] = 1;
+		else if (strcmp(temp->DataBuf.buf, "sheers") == 0)
+			values[i++] = 2;
+		else if (strcmp(temp->DataBuf.buf, "paper") == 0)
+			values[i++] = 3;
+		temp = temp->Next;
+	}
+	if ((values[0] == 3 && values[1] == 1) || (values[0] == 1 && values[1] == 2) || (values[0] == 2 && values[1] == 3))
+		sprintf(str, "Player %d WIN", SocketInfoList->Socket);
+	else sprintf(str, "Player %d LOOSE", SocketInfoList->Socket);
+	return str;
+}
+
+
+
+
+case FD_ACCEPT:
+			   if ((Accept = accept(wParam, NULL, NULL)) == 
+											INVALID_SOCKET)
+			   {	  
+				  sprintf_s (Str, sizeof (Str), 
+								 "accept() failed with error %d", 
+								 WSAGetLastError());
+				  pLB->AddString(Str);
+				  break;
+			   }
+			   if (GetNumClients() < 2){
+
+				   // Создание структуры с информацией о сокете
+				   // и занесение ее в список
+				   CreateSocketInformation(Accept, Str, pLB);
+				   sprintf_s(Str, sizeof (Str),
+					   "Socket number %d connected",
+					   Accept);
+				   pLB->AddString(Str);
+				   WSAAsyncSelect(Accept, hwnd, WM_SOCKET,
+					   FD_READ | FD_WRITE | FD_CLOSE);
+					send(Accept,"1",2,0);
+			   }
+			   else {
+					send(Accept,"0",2,0);
+					closesocket(Accept);
+				}
+			   break;
+
+			   
+			   
+			case FD_READ:
+
+				if (bPrint)
+					 {
+						unsigned l = sizeof(Str)-1;
+						if (l > RecvBytes) 
+						   l = RecvBytes;
+						sprintf_s (Str, sizeof (Str),
+									  SocketInfo->Buffer, l);
+						Str[l]=0;
+						pLB->AddString(Str);
+					 }
+				  }
+			   }
+			   // ЗДЕСЬ НЕТ ОПЕРАТОРА break, поскольку мы 
+			   // получили данные. Продолжаем работу и
+			   // начинаем их отправку клиенту.
+
+			   if (GetNumClients() == 2 && CheckS()){
+				   SendAll(hwnd);
+                   pLB->AddString(WinLos());
+			   }
+			   break;
+
+case FD_WRITE:
+
+
+				  SocketInfo->DataBuf.len = 
+						   SocketInfo->BytesRECV - 
+						   SocketInfo->BytesSEND;
+
+				  if (WSASend(GetSecSocket(SocketInfo->Socket), 
+							  &(SocketInfo->DataBuf), 1, 
+							  &SendBytes, 0, NULL, NULL) == 
+					  SOCKET_ERROR)
+				  {

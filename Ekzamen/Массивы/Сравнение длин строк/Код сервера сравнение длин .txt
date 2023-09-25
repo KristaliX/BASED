@@ -1,0 +1,208 @@
+int GetNumSocket();
+  int Flag=1;
+  int Check(char* Str1, char* Str2);
+
+int GetNumSocket()
+{
+	LPSOCKET_INFORMATION temp= NULL;
+	temp = SocketInfoList;
+	int n = 0;
+	while(temp)
+	{
+		n++;
+		temp=temp->Next;
+	}
+	return n;
+}
+
+int Check(char* Str1, char* Str2)
+{
+	int len1, len2;
+	len1 = strlen(Str1);
+	len2 = strlen(Str2);
+	
+	if (len1 > len2)
+		return 1;
+	else if(len1 == len2)
+		return 0;
+	else
+		return -1;
+}
+
+
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, 
+							WPARAM wParam, LPARAM lParam)
+{
+
+  SOCKET Accept;
+   LPSOCKET_INFORMATION SocketInfo;
+   DWORD RecvBytes, SendBytes;
+   DWORD Flags;
+   WSABUF wsabuf;///////
+   int res;
+
+
+case FD_ACCEPT:
+
+
+ if(Flag && GetNumSocket()<2)
+			   {
+					
+			    // Создание структуры с информацией о сокете
+			   // и занесение ее в список
+
+CreateSocketInformation(Accept, Str, pLB);
+			   sprintf_s (Str, sizeof (Str),
+							  "Socket number %d connected", 
+							  Accept);
+			   pLB->AddString(Str);
+			   WSAAsyncSelect(Accept, hwnd, WM_SOCKET, 
+							  FD_READ|FD_WRITE|FD_CLOSE);
+			   if(GetNumSocket()==2)
+			   {
+				   Flag = 0;
+				wsabuf.buf = "You're connected!";
+				wsabuf.len = strlen(wsabuf.buf);
+				LPSOCKET_INFORMATION temp = NULL;
+				temp = SocketInfoList;
+				while(temp)
+				{
+					
+					if(WSASend(temp->Socket, &wsabuf, 1, &SendBytes, 0, NULL, NULL) == 
+					  SOCKET_ERROR)//
+					{
+						if (WSAGetLastError() != 
+											WSAEWOULDBLOCK)
+					 {
+						 sprintf_s (Str, sizeof (Str),
+									  "WSASend() failed"
+										 " with error %d", 
+										 WSAGetLastError());
+						pLB->AddString(Str);
+						FreeSocketInformation(wParam, 
+											  Str, pLB);
+						return 0;
+					 }
+				  } 
+					temp = temp->Next;
+				}
+			   }
+			   }
+			   else
+			   {
+			   
+				wsabuf.buf = "No more room on server";
+				wsabuf.len = strlen(wsabuf.buf);
+				if(WSASend(Accept, &wsabuf, 1, &SendBytes, 0, NULL, NULL) == 
+					  SOCKET_ERROR)
+				  {
+					 if (WSAGetLastError() != 
+											WSAEWOULDBLOCK)
+					 {
+						sprintf_s (Str, sizeof (Str),
+									  "WSASend() failed"
+										 " with error %d", 
+										 WSAGetLastError());
+						pLB->AddString(Str);
+						FreeSocketInformation(wParam, 
+											  Str, pLB);
+						return 0;
+					 }
+				  } 
+				closesocket(Accept);
+
+			   }
+			   break;
+			   
+			   
+			case FD_READ:
+
+ha-ha,CLASSIC, Lets comment our FD_READ AND SHUT THE FUCK UP,BITCH
+PUT THIS SHIT TO THE FD READ 
+
+
+				  else // OK, изменяем счетчик байтов
+				  {
+					 SocketInfo->BytesRECV = RecvBytes;
+					 // Вывод сообщения
+					 if (bPrint)
+					 {
+						unsigned l = sizeof(Str)-1;
+						if (l > RecvBytes) 
+						   l = RecvBytes;
+						sprintf_s (Str, sizeof (Str),
+									  SocketInfo->Buffer, l);
+						Str[l]=0;
+						pLB->AddString(Str);
+					 }
+				  }
+			  {
+			  LPSOCKET_INFORMATION temp = NULL;
+			  temp = SocketInfoList;
+			  int readflag=1;
+			  while(temp)
+			  {
+				  if (temp->BytesRECV == 0)
+				  {
+					  readflag = 0;
+					  break;
+				  }
+				  temp = temp->Next;
+			  }
+              char user1[200], user2[200];
+			  int result;
+			  if (readflag)
+			  {
+				  sprintf_s(user1, sizeof(user1), SocketInfoList->Buffer);
+				  sprintf_s(user2, sizeof(user2), SocketInfoList->Next->Buffer);
+				  result = Check(user1, user2);
+				  switch(result)
+				  {
+				  case -1:
+					  SocketInfoList -> DataBuf.buf = "Less";
+					  SocketInfoList -> DataBuf.len = strlen(SocketInfoList -> DataBuf.buf);
+					  SocketInfoList -> Next -> DataBuf.buf = "Bigger";
+					  SocketInfoList -> Next -> DataBuf.len = strlen(SocketInfoList -> Next -> DataBuf.buf);
+					  break;
+				 case 1:
+					  SocketInfoList -> DataBuf.buf = "Bigger";
+					  SocketInfoList -> DataBuf.len = strlen(SocketInfoList -> DataBuf.buf);
+					  SocketInfoList -> Next -> DataBuf.buf = "Less";
+					  SocketInfoList -> Next -> DataBuf.len = strlen(SocketInfoList -> Next -> DataBuf.buf);
+					  break;
+				 case 0: 
+					  SocketInfoList -> DataBuf.buf = "Equal";
+					  SocketInfoList -> DataBuf.len = strlen(SocketInfoList -> DataBuf.buf);
+					  SocketInfoList -> Next -> DataBuf.buf = "Equal";
+					  SocketInfoList -> Next -> DataBuf.len = strlen(SocketInfoList -> Next -> DataBuf.buf);
+					  break;
+				  }
+
+				  temp = SocketInfoList;
+				  while(temp)
+				  {
+					  if (WSASend(temp->Socket, 
+							  &(temp->DataBuf), 1, 
+							  &SendBytes, 0, NULL, NULL) == 
+					  SOCKET_ERROR)
+				  {
+					 if (WSAGetLastError() != 
+											WSAEWOULDBLOCK)
+					 {
+						sprintf_s (Str, sizeof (Str),
+									  "WSASend() failed"
+										 " with error %d", 
+										 WSAGetLastError());
+						pLB->AddString(Str);
+						FreeSocketInformation(wParam, 
+											  Str, pLB);
+						return 0;
+					 }
+				  } 
+					  temp = temp -> Next;
+				  }
+			  }
+			  }
+
+			break;

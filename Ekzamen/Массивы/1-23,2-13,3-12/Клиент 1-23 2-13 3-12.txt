@@ -1,0 +1,72 @@
+void CClientDlg::OnBnClickedConnect() 
+
+
+CopyMemory(&server.sin_addr, host->h_addr_list[0], host->h_length);
+	}
+
+	if (connect(m_sClient, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
+	{
+		sprintf_s(Str, sizeof (Str), "connect() failed: %d", WSAGetLastError());
+		m_ListBox.AddString(Str);
+		return;
+	}
+	recv(m_sClient, Str, 2, 0);
+	if (atoi(Str) == 1)
+		SetConnected(true);
+	else{
+		sprintf_s(Str, sizeof(Str), "Достигнут лимит подключений");
+		m_ListBox.AddString(Str);
+		SetConnected(false);
+	}
+}
+
+
+void CClientDlg::OnBnClickedSend()
+
+UpdateData();
+	if (m_Number<1 || m_Number>20)
+	{
+		m_ListBox.AddString("Number of messages must be between 1 and 20");
+		return;
+	}
+
+	GetDlgItem(IDC_MESSAGE)->GetWindowText(szMessage, sizeof(szMessage));
+	if (m_NoEcho.GetCheck() == 1)
+		bSendOnly = TRUE;
+
+	// Отправка и прием данных 
+	//
+	for (i = 0; i < 2; i++)
+	{
+		if (i < 1){
+			ret = send(m_sClient, szMessage, strlen(szMessage), 0);
+
+			if (ret == 0)
+				break;
+			else if (ret == SOCKET_ERROR)
+			{
+				sprintf_s(Str, sizeof (Str), "send() failed: %d", WSAGetLastError());
+				m_ListBox.AddString(Str);
+				break;
+			}
+
+			sprintf_s(Str, sizeof (Str), "Send %d bytes\n", ret);
+			m_ListBox.AddString(Str);
+		}
+
+		//удалить !(что-то с "б")
+
+		ret = recv(m_sClient, szBuffer, DEFAULT_BUFFER, 0);
+		if (ret == 0)	// Корректное завершение
+			break;
+		else if (ret == SOCKET_ERROR)
+		{
+			sprintf_s(Str, sizeof (Str), "recv() failed: %d", WSAGetLastError());
+			m_ListBox.AddString(Str);
+			break;
+		}
+		szBuffer[ret] = '\0';
+		sprintf_s(Str, sizeof (Str), "RECV [%d bytes]: '%s'", ret, szBuffer);
+		m_ListBox.AddString(Str);
+	}
+}

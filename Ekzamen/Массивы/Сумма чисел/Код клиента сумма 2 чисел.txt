@@ -1,0 +1,33 @@
+#define DEFAULT_COUNT	1
+
+void CClientDlg::OnBnClickedConnect() 
+
+
+CopyMemory(&server.sin_addr, host->h_addr_list[0], host->h_length);
+	}
+
+	if (connect(m_sClient, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
+	{
+		sprintf_s (Str, sizeof (Str), "connect() failed: %d", WSAGetLastError());
+		m_ListBox.AddString(Str);
+		return;
+	}
+
+	char szBuffer[DEFAULT_BUFFER];
+		int	ret = recv(m_sClient, szBuffer, DEFAULT_BUFFER, 0);
+		if (ret == SOCKET_ERROR)
+			{
+				sprintf_s (Str, sizeof (Str), "recv() failed: %d", WSAGetLastError());
+				m_ListBox.AddString(Str);
+			}
+		else
+		{
+			szBuffer[ret] = '\0';
+			sprintf_s (Str, sizeof (Str), szBuffer);
+			m_ListBox.AddString(Str);
+			if(strcmp(szBuffer, "No more room on server")!=0)
+			SetConnected(true);
+		}
+
+
+

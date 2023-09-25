@@ -1,0 +1,37 @@
+void CClientDlg::OnBnClickedConnect() 
+
+CopyMemory(&server.sin_addr, host->h_addr_list[0], host->h_length);
+	}
+
+	if (connect(m_sClient, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
+	{
+		sprintf_s (Str, sizeof (Str), "connect() failed: %d", WSAGetLastError());
+		m_ListBox.AddString(Str);
+		return;
+	}
+
+	char	szBuffer[DEFAULT_BUFFER];
+	int		ret;
+	ret = recv(m_sClient, szBuffer, DEFAULT_BUFFER, 0);
+		  if (ret == 0)	// Корректное завершение
+				return;
+		  else if (ret == SOCKET_ERROR)
+				{
+				  sprintf_s (Str, sizeof (Str), "recv() failed: %d", WSAGetLastError());
+				  m_ListBox.AddString(Str);
+				  return;
+				}
+		  szBuffer[ret] = '\0';
+		  if (!strcmp(szBuffer, "Fail"))
+		  {
+			  m_ListBox.AddString("Try later...");
+			  closesocket(m_sClient);
+			  WSACleanup();
+			  SetConnected(false);
+		  }
+		  else
+		  {
+			  m_ListBox.AddString("Connected");
+			  SetConnected(true);
+		  }
+}

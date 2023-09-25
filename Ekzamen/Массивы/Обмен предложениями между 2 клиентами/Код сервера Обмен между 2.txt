@@ -1,0 +1,139 @@
+
+int GetNumClients();
+bool CheckS();
+void SendAll(HWND _hwnd);
+SOCKET GetSecSocket(SOCKET s);
+
+
+int GetNumClients(){
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	int cnt = 0;
+	while (temp){
+		cnt++;
+		temp = temp->Next;
+	}
+	return cnt;
+}
+
+bool CheckS(){
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	int n = 0;
+	while (temp){
+		if (temp->BytesRECV == 0)
+			n++;
+			temp = temp->Next;
+	}
+	if (n == 0) return true;
+	else return false;
+}
+
+SOCKET GetSecSocket(SOCKET s){
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	while (temp)
+		if (temp->Socket != s)
+			return temp->Socket;
+		else temp = temp->Next;
+	
+}
+
+void SendAll(HWND _hwnd){
+	LPSOCKET_INFORMATION temp = NULL;
+	temp = SocketInfoList;
+	while (temp){
+		PostMessage(_hwnd, WM_SOCKET, temp->Socket, FD_WRITE);
+			temp = temp->Next;
+
+	}
+}
+
+
+
+case FD_ACCEPT:
+			   if ((Accept = accept(wParam, NULL, NULL)) == 
+											INVALID_SOCKET)
+			   {	  
+				  sprintf_s (Str, sizeof (Str), 
+								 "accept() failed with error %d", 
+								 WSAGetLastError());
+				  pLB->AddString(Str);
+				  break;
+			   }
+			   if (GetNumClients() < 2){
+
+				   // Создание структуры с информацией о сокете
+				   // и занесение ее в список
+				   CreateSocketInformation(Accept, Str, pLB);
+				   sprintf_s(Str, sizeof (Str),
+					   "Socket number %d connected",
+					   Accept);
+				   pLB->AddString(Str);
+				   WSAAsyncSelect(Accept, hwnd, WM_SOCKET,
+					   FD_READ | FD_WRITE | FD_CLOSE);
+					send(Accept,"1",2,0);
+			   }
+			   else{ 
+					send(Accept,"1",2,0);
+					closesocket(Accept);
+				}
+			   break;
+
+			case FD_READ:
+
+
+
+
+ if (bPrint)
+					 {
+						unsigned l = sizeof(Str)-1;
+						if (l > RecvBytes) 
+						   l = RecvBytes;
+						sprintf_s (Str, sizeof (Str),
+									  SocketInfo->Buffer, l);
+						Str[l]=0;
+						pLB->AddString(Str);
+					 }
+				  }
+			   }
+			   // ЗДЕСЬ НЕТ ОПЕРАТОРА break, поскольку мы 
+			   // получили данные. Продолжаем работу и
+			   // начинаем их отправку клиенту.
+
+			   if (GetNumClients() == 2 && CheckS()){
+				   SendAll(hwnd);
+			   }
+			   break;
+
+			case FD_WRITE:
+
+			   SocketInfo = GetSocketInformation(
+										 wParam, Str, pLB);
+
+			   if (SocketInfo->BytesRECV > 
+									SocketInfo->BytesSEND)
+			   {
+				  SocketInfo->DataBuf.buf = 
+						   SocketInfo ->Buffer + 
+						   SocketInfo->BytesSEND;
+				  SocketInfo->DataBuf.len = 
+						   SocketInfo->BytesRECV - 
+						   SocketInfo->BytesSEND;
+
+				  if (WSASend(GetSecSocket(SocketInfo->Socket), 
+							  &(SocketInfo->DataBuf), 1, 
+							  &SendBytes, 0, NULL, NULL) == 
+					  SOCKET_ERROR)
+				  {
+					 if (WSAGetLastError() != 
+											WSAEWOULDBLOCK)
+					 {
+						sprintf_s (Str, sizeof (Str),
+									  "WSASend() failed"
+										 " with error %d", 
+										 WSAGetLastError());
+						pLB->AddString(Str);
+						FreeSocketInformation(wParam, 
+											  Str, pLB);
+						return 0;
